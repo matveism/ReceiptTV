@@ -18,6 +18,8 @@
     a, a:hover, a:focus { color: #0f0; }
     #receipt-result { min-height: 40px; }
   </style>
+  <!-- Puter.js OCR -->
+  <script src="https://js.puter.com/v2/"></script>
 </head>
 <body>
 <div class="container">
@@ -76,7 +78,6 @@
 =========================== */
 const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/16njUG63RZb29VK2z3zo4RiyM_M6FeTio4gWK_WwFUAo/export?format=csv";
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyED75I7fLhO119evsRGXwDhQftAYe5_dQwY8T9bhZtEh09OfhCe7rGSgYFOfIh7JVyRw/exec";
-const OCR_SPACE_API_KEY = "K86518543388957";
 
 let currentUser = null;
 let allRows = [];
@@ -189,34 +190,23 @@ function extractDate(text) {
   if (month < 1 || month > 12) return null;
   if (day < 1 || day > 31) return null;
 
-  // Assume 20xx for 2-digit year
   const year = 2000 + year2;
-
-  // Return ISO format for reliable Date parsing
   return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
 
 /* ===========================
-   OCR FUNCTION
+   OCR FUNCTION (Puter.js)
 =========================== */
 async function realOCR(file) {
-  const formData = new FormData();
-  formData.append("file", file);
-  formData.append("apikey", OCR_SPACE_API_KEY);
-  formData.append("language", "eng");
-
-  const res = await fetch("https://api.ocr.space/parse/image", {
-    method: "POST",
-    body: formData
-  });
-
-  const data = await res.json();
-
-  if (data.IsErroredOnProcessing) {
-    throw new Error("OCR Error: " + JSON.stringify(data.ErrorMessage));
+  if (!window.puter || !window.puter.ocr) {
+    throw new Error("Puter.js OCR not available");
   }
 
-  const text = data.ParsedResults?.[0]?.ParsedText || "";
+  const text = await window.puter.ocr(file);
+  if (!text || !text.trim()) {
+    throw new Error("No text detected on receipt");
+  }
+
   const storeName = text.split("\n")[0].trim();
   const date = extractDate(text);
 
@@ -323,7 +313,7 @@ $("#receipt-form").on("submit", async e => {
 
   } catch (err) {
     console.error("OCR ERROR:", err);
-    $("#receipt-result").html("<span class='text-danger'>Error processing receipt.</span>");
+    $("#receipt-result").html("<span class='text-danger'>Error processing receipt: " + (err.message || err) + "</span>");
   }
 });
 </script>
