@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>RVT Receipts</title>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+  <style>
+    body { padding-top: 40px; background-color: #111; color: #eee; }
+    .logo { font-size: 32px; font-weight: bold; letter-spacing: 4px; color: #0f0; }
+    .panel { background-color: #1b1b1b; border-color: #333; }
+    .panel-heading { background-color: #222 !important; border-color: #333 !important; color: #0f0 !important; }
+    .form-control, .btn { background-color: #222; border-color: #444; color: #eee; }
+    .form-control:focus { border-color: #0f0; box-shadow: none; }
+    .btn-primary { background-color: #0f0; border-color: #0f0; color: #000; }
+    .btn-success { background-color: #09c709; border-color: #09c709; color: #000; }
+    .hidden { display: none; }
+    .balance { font-size: 20px; font-weight: bold; color: #0f0; }
+    a, a:hover, a:focus { color: #0f0; }
+    #receipt-result { min-height: 40px; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="text-center">
+    <div class="logo">RVT</div>
+    <p>Upload receipts, earn points in real time.</p>
+  </div>
+
+  <!-- Login Panel -->
+  <div id="login-panel" class="panel panel-default">
+    <div class="panel-heading">Login</div>
+    <div class="panel-body">
+      <form id="login-form" class="form-inline text-center">
+        <input id="username" class="form-control" placeholder="Username" required>
+        <input id="password" class="form-control" type="password" placeholder="Password" required>
+        <button type="submit" class="btn btn-primary">Login</button>
+      </form>
+      <div id="login-error" class="text-danger text-center" style="margin-top:10px;"></div>
+    </div>
+  </div>
+
+  <!-- Dashboard -->
+  <div id="dashboard" class="hidden">
+    <div class="panel panel-info">
+      <div class="panel-heading clearfix">
+        <span id="welcome-user"></span>
+        <span class="pull-right balance">Balance: <span id="balance-value">0</span> pts</span>
+      </div>
+      <div class="panel-body">
+        <form id="receipt-form">
+          <label>Receipt Image</label>
+          <input id="receipt-image" type="file" accept="image/*" class="form-control" required>
+
+          <label style="margin-top:10px;">Offer Type</label>
+          <select id="offer-type" class="form-control">
+            <option value="">None</option>
+          </select>
+
+          <div class="checkbox">
+            <label><input type="checkbox" id="offer-check"> Claim this offer</label>
+          </div>
+
+          <button type="submit" class="btn btn-success">Upload & Get Points</button>
+        </form>
+
+        <div id="receipt-result" style="margin-top:15px;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+<script>
+/* ===========================
+   CONFIG
+=========================== */
+const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/16njUG63RZb29VK2z3zo4RiyM_M6FeTio4gWK_WwFUAo/export?format=csv";
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyED75I7fLhO119evsRGXwDhQftAYe5_dQwY8T9bhZtEh09OfhCe7rGSgYFOfIh7JVyRw/exec";
+const OCR_SPACE_API_KEY = "K86518543388957";
+
+let currentUser = null;
+let allRows = [];
+
+/* ===========================
+   CSV PARSER
+=========================== */
+function parseCSV(text) {
+  const lines = text.trim().split(/\r?\n/);
+  const headers = lines[0].split(",");
+  return lines.slice(1).map(line => {
+    const cols = line.split(",");
+    const obj = {};
+    headers.forEach((h, i) => obj[h.trim()] = (cols[i] || "").trim());
+    return obj;
+  });
+}
+
+/* ===========================
+   LOAD SHEET
+=========================== */
+function loadSheetData(callback) {
+  $.get(SHEET_CSV_URL, data => {
+    allRows = parseCSV(data);
+    callback();
+  }).fail(() => {
+    $("#login-error").text("Error loading database.");
+  });
+}
+
+/* ===========================
+   POPULATE OFFERS
+=========================== */
+function populateOffers() {
+  const seen = {};
+  allRows.forEach(row => {
+    if (row.OfferType && !seen[row.OfferType]) {
+      seen[row.OfferType] = true;
+      $("#offer-type").append(
+        $("<option>")
+          .val(row.OfferType)
+          .attr("data-pts", row.OfferPts || 0)
+          .text(`${row.OfferType} (+${row.OfferPts} pts)`)
+      );
+    }
+  });
+}
+
+/* ===========================
+   LOGIN
+=========================== */
+$("#login-form").on("submit", e => {
+  e.preventDefault();
+  const u = $("#username").val().trim();
+  const p = $("#password").val().trim();
+
+  loadSheetData(() => {
+    const user = allRows.find(r => r.Username === u && r.Password === p);
+    if (!user) {
+      $("#login-error").text("Invalid username or password.");
+      return;
+    }
+
+    currentUser = user;
+    $("#welcome-user").text("Welcome, " + currentUser.Username);
+    $("#balance-value").text(currentUser.Balance || 0);
+    $("#login-panel").addClass("hidden");
+    $("#dashboard").removeClass("hidden");
+
+    populateOffers();
+  });
+});
+
+/* ===========================
+   HEIC → JPG CONVERTER
+=========================== */
+async function convertHeicToJpg(file) {
+  return new Promise(resolve => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = img.width;
+        canvas.height = img.height;
+        canvas.getContext("2d").drawImage(img, 0, 0);
+
+        canvas.toBlob(blob => {
+          resolve(new File([blob], file.name.replace(/\.heic/i, ".jpg"), { type: "image/jpeg" }));
+        }, "image/jpeg", 0.92);
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+/* ===========================
+   DATE EXTRACTION (MM/DD/YY)
+=========================== */
+function extractDate(text) {
+  // Matches: 01/15/26, 1/5/26, 01-15-26, 1-5-26
+  const m = text.match(/\b(\d{1,2})[-\/](\d{1,2})[-\/](\d{2})\b/);
+  if (!m) return null;
+
+  const month = parseInt(m[1], 10);
+  const day = parseInt(m[2], 10);
+  const year2 = parseInt(m[3], 10);
+
+  if (month < 1 || month > 12) return null;
+  if (day < 1 || day > 31) return null;
+
+  // Assume 20xx for 2-digit year
+  const year = 2000 + year2;
+
+  // Return ISO format for reliable Date parsing
+  return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
+/* ===========================
+   OCR FUNCTION
+=========================== */
+async function realOCR(file) {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("apikey", OCR_SPACE_API_KEY);
+  formData.append("language", "eng");
+
+  const res = await fetch("https://api.ocr.space/parse/image", {
+    method: "POST",
+    body: formData
+  });
+
+  const data = await res.json();
+
+  if (data.IsErroredOnProcessing) {
+    throw new Error("OCR Error: " + JSON.stringify(data.ErrorMessage));
+  }
+
+  const text = data.ParsedResults?.[0]?.ParsedText || "";
+  const storeName = text.split("\n")[0].trim();
+  const date = extractDate(text);
+
+  const totalMatch = text.match(/total[^0-9]*([\d\.]+)/i);
+  const total = totalMatch ? parseFloat(totalMatch[1]) : 0;
+
+  return { storeName, date, total, fullText: text };
+}
+
+/* ===========================
+   DATE CHECK
+=========================== */
+function isWithin7Days(dateStr) {
+  if (!dateStr) return false;
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return false;
+  const diff = (new Date() - d) / (1000 * 60 * 60 * 24);
+  return diff <= 7 && diff >= 0;
+}
+
+/* ===========================
+   POINTS
+=========================== */
+function calculateBasePoints(total) {
+  if (total >= 0.01 && total <= 49.99) return 5;
+  if (total >= 50.01 && total <= 99.99) return 25;
+  if (total >= 100) return 50;
+  return 0;
+}
+
+/* ===========================
+   SEND TO APPS SCRIPT
+=========================== */
+async function sendToAppsScript(ocr, newBalance) {
+  const payload = {
+    username: currentUser.Username,
+    newBalance,
+    imageURL: "Uploaded via web app",
+    storeName: ocr.storeName,
+    date: ocr.date,
+    total: ocr.total
+  };
+
+  await fetch(APPS_SCRIPT_URL, {
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
+}
+
+/* ===========================
+   RECEIPT SUBMIT
+=========================== */
+$("#receipt-form").on("submit", async e => {
+  e.preventDefault();
+
+  let file = $("#receipt-image")[0].files[0];
+  if (!file) return;
+
+  const isHeic =
+    (file.type && file.type.toLowerCase().includes("heic")) ||
+    (file.type && file.type.toLowerCase().includes("heif")) ||
+    file.name.toLowerCase().endsWith(".heic") ||
+    file.name.toLowerCase().endsWith(".heif");
+
+  if (isHeic) {
+    file = await convertHeicToJpg(file);
+  }
+
+  $("#receipt-result").html("Processing receipt...");
+
+  try {
+    const ocr = await realOCR(file);
+
+    if (!isWithin7Days(ocr.date)) {
+      $("#receipt-result").html("<span class='text-danger'>Receipt older than 7 days.</span>");
+      return;
+    }
+
+    const basePts = calculateBasePoints(ocr.total);
+    let bonusPts = 0;
+
+    const offerType = $("#offer-type").val();
+    const offerPts = parseInt($("#offer-type option:selected").data("pts") || 0);
+    const offerChecked = $("#offer-check").is(":checked");
+
+    if (offerChecked && offerType && ocr.fullText.toLowerCase().includes(offerType.toLowerCase())) {
+      bonusPts = offerPts;
+    }
+
+    const newBalance = parseInt(currentUser.Balance || "0") + basePts + bonusPts;
+    currentUser.Balance = newBalance;
+    $("#balance-value").text(newBalance);
+
+    $("#receipt-result").html(`
+      Store: ${ocr.storeName}<br>
+      Date: ${ocr.date || "Not found"}<br>
+      Total: $${ocr.total.toFixed(2)}<br>
+      Base: ${basePts} pts<br>
+      Bonus: ${bonusPts} pts<br>
+      <strong>Total Added: ${basePts + bonusPts} pts</strong>
+    `);
+
+    await sendToAppsScript(ocr, newBalance);
+
+  } catch (err) {
+    console.error("OCR ERROR:", err);
+    $("#receipt-result").html("<span class='text-danger'>Error processing receipt.</span>");
+  }
+});
+</script>
+</body>
+</html>
