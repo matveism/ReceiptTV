@@ -2,799 +2,1350 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>RVT Receipts</title>
+  <title>RVT Receipts - Professional Receipt Scanner</title>
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   <style>
-    body { padding-top: 40px; background-color: #111; color: #eee; }
-    .logo { font-size: 32px; font-weight: bold; letter-spacing: 4px; color: #0f0; }
-    .panel { background-color: #1b1b1b; border-color: #333; }
-    .panel-heading { background-color: #222 !important; border-color: #333 !important; color: #0f0 !important; }
-    .form-control, .btn { background-color: #222; border-color: #444; color: #eee; }
-    .form-control:focus { border-color: #0f0; box-shadow: none; }
-    .btn-primary { background-color: #0f0; border-color: #0f0; color: #000; }
-    .btn-success { background-color: #09c709; border-color: #09c709; color: #000; }
-    .btn-warning { background-color: #ff9800; border-color: #ff9800; color: #000; }
-    .hidden { display: none; }
-    .balance { font-size: 20px; font-weight: bold; color: #0f0; }
-    a, a:hover, a:focus { color: #0f0; }
-    #receipt-result { min-height: 40px; }
-    
-    /* Receipt Frame */
-    .receipt-frame {
-      border: 3px solid #0f0;
-      border-radius: 10px;
+    body {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      min-height: 100vh;
       padding: 20px;
-      margin: 20px 0;
-      background: #222;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    
+    .container {
+      max-width: 1200px;
+      background: white;
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      margin-top: 20px;
+      background: #f8f9fa;
+    }
+    
+    .logo-header {
       text-align: center;
-      position: relative;
-      min-height: 300px;
+      margin-bottom: 40px;
+      padding-bottom: 20px;
+      border-bottom: 3px solid #e9ecef;
     }
-    .store-name {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      right: 10px;
-      background: #0f0;
-      color: #000;
-      padding: 5px;
-      font-weight: bold;
-      text-align: center;
-      border-radius: 3px;
-      z-index: 10;
+    
+    .logo {
+      font-size: 48px;
+      font-weight: 900;
+      color: #6c63ff;
+      text-transform: uppercase;
+      letter-spacing: 4px;
+      margin-bottom: 10px;
     }
-    #receipt-preview {
-      max-width: 100%;
-      max-height: 250px;
-      margin: 20px 0;
+    
+    .tagline {
+      color: #6c757d;
+      font-size: 18px;
+      font-weight: 300;
     }
-    .upload-area {
-      padding: 40px;
-      cursor: pointer;
-      color: #888;
-      position: relative;
-      min-height: 200px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-    }
-    .upload-area:hover {
-      background: #2a2a2a;
-    }
-    .file-input-wrapper {
+    
+    /* Instacart/Fetch-style Receipt Frame */
+    .receipt-frame {
+      background: linear-gradient(145deg, #ffffff, #f0f0f0);
+      border-radius: 20px;
+      padding: 0;
+      margin: 30px auto;
+      max-width: 600px;
+      box-shadow: 
+        0 10px 40px rgba(0,0,0,0.1),
+        0 0 0 2px #6c63ff inset;
       position: relative;
       overflow: hidden;
-      display: inline-block;
+      min-height: 500px;
     }
-    .file-input-wrapper input[type=file] {
+    
+    .receipt-corner {
       position: absolute;
-      left: 0;
-      top: 0;
-      opacity: 0;
+      width: 80px;
+      height: 80px;
+      border: 3px solid #6c63ff;
+      border-radius: 15px;
+    }
+    
+    .corner-tl {
+      top: -3px;
+      left: -3px;
+      border-right: none;
+      border-bottom: none;
+    }
+    
+    .corner-tr {
+      top: -3px;
+      right: -3px;
+      border-left: none;
+      border-bottom: none;
+    }
+    
+    .corner-bl {
+      bottom: -3px;
+      left: -3px;
+      border-right: none;
+      border-top: none;
+    }
+    
+    .corner-br {
+      bottom: -3px;
+      right: -3px;
+      border-left: none;
+      border-top: none;
+    }
+    
+    .receipt-header {
+      background: linear-gradient(135deg, #6c63ff 0%, #3a36b0 100%);
+      color: white;
+      padding: 25px 30px;
+      text-align: center;
+      border-radius: 18px 18px 0 0;
+    }
+    
+    .receipt-title {
+      font-size: 28px;
+      font-weight: 700;
+      margin: 0;
+    }
+    
+    .receipt-subtitle {
+      font-size: 14px;
+      opacity: 0.9;
+      margin: 5px 0 0 0;
+    }
+    
+    .receipt-body {
+      padding: 30px;
+      position: relative;
+    }
+    
+    .receipt-image-container {
+      position: relative;
+      border-radius: 15px;
+      overflow: hidden;
+      background: #e9ecef;
+      min-height: 300px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px dashed #adb5bd;
+      margin-bottom: 20px;
+    }
+    
+    .receipt-preview {
+      max-width: 100%;
+      max-height: 300px;
+      object-fit: contain;
+      border-radius: 10px;
+    }
+    
+    /* FIXED UPLOAD AREA - Now clickable! */
+    .upload-area {
+      text-align: center;
+      padding: 60px 20px;
       cursor: pointer;
+      transition: all 0.3s;
+      color: #6c757d;
+      position: relative;
       width: 100%;
       height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
     }
+    
+    .upload-area:hover {
+      background: rgba(108, 99, 255, 0.05);
+    }
+    
     .upload-icon {
-      font-size: 48px;
-      margin-bottom: 10px;
-      color: #0f0;
+      font-size: 80px;
+      color: #6c63ff;
+      margin-bottom: 20px;
+      opacity: 0.7;
     }
-    .alert {
-      padding: 10px;
-      border-radius: 5px;
+    
+    .upload-text {
+      font-size: 18px;
+      color: #495057;
+    }
+    
+    .upload-text strong {
+      color: #6c63ff;
+      font-weight: 600;
+    }
+    
+    /* File input wrapper - FIX FOR CLICKABILITY */
+    .file-input-wrapper {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      cursor: pointer;
+      opacity: 0;
+      z-index: 10;
+    }
+    
+    .file-input-wrapper input[type="file"] {
+      width: 100%;
+      height: 100%;
+      cursor: pointer;
+    }
+    
+    .extracted-data {
+      background: white;
+      border-radius: 15px;
+      padding: 25px;
+      margin-top: 20px;
+      border: 2px solid #e9ecef;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+    }
+    
+    .data-row {
+      display: flex;
+      align-items: center;
+      padding: 15px 0;
+      border-bottom: 1px solid #f1f3f5;
+    }
+    
+    .data-row:last-child {
+      border-bottom: none;
+    }
+    
+    .data-icon {
+      width: 50px;
+      height: 50px;
+      background: linear-gradient(135deg, #6c63ff 0%, #3a36b0 100%);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 20px;
+      color: white;
+      font-size: 22px;
+    }
+    
+    .data-content {
+      flex: 1;
+    }
+    
+    .data-label {
+      font-size: 12px;
+      color: #6c757d;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: 600;
+    }
+    
+    .data-value {
+      font-size: 20px;
+      color: #212529;
+      font-weight: 600;
+      margin-top: 5px;
+    }
+    
+    .store-badge {
+      background: #ff6b6b;
+      color: white;
+      padding: 5px 15px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 600;
+      display: inline-block;
+      margin-top: 5px;
+    }
+    
+    .receipt-footer {
+      background: #f8f9fa;
+      padding: 20px 30px;
+      border-radius: 0 0 18px 18px;
+      border-top: 2px solid #e9ecef;
+    }
+    
+    /* Points Display */
+    .points-display {
+      background: linear-gradient(135deg, #ff6b6b 0%, #ff8e8e 100%);
+      color: white;
+      border-radius: 15px;
+      padding: 20px;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    
+    .points-label {
+      font-size: 14px;
+      opacity: 0.9;
+      margin-bottom: 5px;
+    }
+    
+    .points-value {
+      font-size: 36px;
+      font-weight: 800;
+      margin: 0;
+    }
+    
+    /* Balance Cards */
+    .balance-card {
+      background: white;
+      border-radius: 15px;
+      padding: 25px;
+      margin-bottom: 20px;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+      border: 1px solid #e9ecef;
+      transition: transform 0.3s;
+    }
+    
+    .balance-card:hover {
+      transform: translateY(-5px);
+    }
+    
+    .balance-amount {
+      font-size: 32px;
+      font-weight: 800;
+      color: #6c63ff;
       margin: 10px 0;
     }
-    .alert-success {
-      background: #155724;
-      color: #d4edda;
-      border: 1px solid #c3e6cb;
+    
+    .balance-label {
+      font-size: 14px;
+      color: #6c757d;
+      text-transform: uppercase;
+      letter-spacing: 1px;
     }
-    .alert-danger {
-      background: #721c24;
-      color: #f8d7da;
-      border: 1px solid #f5c6cb;
+    
+    /* Processing Animation */
+    .processing-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(255, 255, 255, 0.95);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      z-index: 100;
+      border-radius: 15px;
     }
-    .alert-info {
-      background: #0c5460;
-      color: #d1ecf1;
-      border: 1px solid #bee5eb;
+    
+    .spinner {
+      width: 60px;
+      height: 60px;
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #6c63ff;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 20px;
     }
-    .history-item {
-      border-bottom: 1px solid #333;
-      padding: 8px 0;
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    /* Duplicate Warning */
+    .duplicate-warning {
+      background: #fff3cd;
+      border: 2px solid #ffeaa7;
+      border-radius: 12px;
+      padding: 20px;
+      margin: 20px 0;
+      color: #856404;
+      text-align: center;
+    }
+    
+    .warning-icon {
+      font-size: 40px;
+      margin-bottom: 10px;
+    }
+    
+    /* Store Logo Detection */
+    .store-logo-display {
+      position: absolute;
+      top: 15px;
+      left: 15px;
+      background: white;
+      padding: 10px 15px;
+      border-radius: 10px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      display: flex;
+      align-items: center;
+      z-index: 10;
+    }
+    
+    .store-logo-icon {
+      width: 30px;
+      height: 30px;
+      background: #6c63ff;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      margin-right: 10px;
+      font-weight: bold;
+    }
+    
+    .store-logo-name {
+      font-weight: 600;
+      color: #212529;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+      .receipt-frame {
+        margin: 15px auto;
+      }
+      
+      .receipt-body {
+        padding: 15px;
+      }
+    }
+    
+    .hidden {
+      display: none !important;
     }
   </style>
 </head>
 <body>
-<div class="container">
-  <div class="text-center">
-    <div class="logo">RVT RECEIPTS</div>
-    <p>Upload receipts, earn points, cash out rewards</p>
-  </div>
-
-  <!-- Login -->
-  <div id="login-panel" class="panel panel-default">
-    <div class="panel-heading">Login</div>
-    <div class="panel-body text-center">
-      <form id="login-form">
-        <input id="username" class="form-control" style="width:200px;display:inline;" placeholder="Username" required>
-        <input id="password" class="form-control" type="password" style="width:200px;display:inline;" placeholder="Password" required>
-        <button type="submit" class="btn btn-primary">Login</button>
-      </form>
-      <div id="login-error" class="text-danger" style="margin-top:10px;"></div>
+  <div class="container">
+    <!-- Header -->
+    <div class="logo-header">
+      <div class="logo">RVT</div>
+      <div class="tagline">Scan receipts. Earn rewards. Simple.</div>
     </div>
-  </div>
-
-  <!-- Dashboard -->
-  <div id="dashboard" class="hidden">
-    <div class="panel panel-default">
-      <div class="panel-heading clearfix">
-        Welcome, <span id="welcome-user"></span>
-        <span class="pull-right balance">Balance: <span id="balance-value">0</span> pts</span>
-      </div>
-      <div class="panel-body">
-        <div class="row">
-          <div class="col-md-6">
-            <!-- Receipt Upload -->
-            <div class="panel panel-default">
-              <div class="panel-heading">Upload Receipt</div>
-              <div class="panel-body">
-                <div class="receipt-frame">
-                  <div id="store-name-display" class="store-name hidden">Store: <span id="detected-store">Unknown</span></div>
-                  
-                  <!-- FIXED UPLOAD AREA - Now clickable! -->
-                  <div class="file-input-wrapper">
-                    <div id="upload-area" class="upload-area">
-                      <div class="upload-icon">📷</div>
-                      <strong>Click to upload receipt</strong><br>
-                      JPG, PNG, HEIC accepted<br>
-                      <small>Max 5MB</small>
-                    </div>
-                    <input type="file" id="receipt-image" accept="image/*">
-                  </div>
-                  
-                  <img id="receipt-preview" class="hidden">
-                  <div id="processing" class="hidden">
-                    <div style="color:#0f0; margin:20px;">
-                      <div class="spinner-border" style="width: 3rem; height: 3rem;" role="status">
-                        <span class="sr-only">Processing...</span>
-                      </div>
-                      <div>Processing receipt...</div>
-                    </div>
-                  </div>
-                </div>
-                
-                <div class="form-group">
-                  <label>Select Bonus Offer (Optional)</label>
-                  <select id="offer-type" class="form-control">
-                    <option value="">No offer</option>
-                  </select>
-                </div>
-                
-                <button id="submit-receipt" class="btn btn-success btn-block" disabled>Process Receipt & Earn Points</button>
-                <div id="result-message" style="margin-top:10px;"></div>
-              </div>
+    
+    <!-- Login Panel -->
+    <div id="login-panel">
+      <div class="row">
+        <div class="col-md-6 col-md-offset-3">
+          <div class="receipt-frame">
+            <div class="receipt-header">
+              <h2 class="receipt-title">Welcome Back</h2>
+              <p class="receipt-subtitle">Sign in to your account</p>
             </div>
-            
-            <!-- Cashout -->
-            <div class="panel panel-default">
-              <div class="panel-heading">Cash Out Points</div>
-              <div class="panel-body">
-                <p>100 points = $1.00</p>
+            <div class="receipt-body">
+              <form id="login-form">
                 <div class="form-group">
-                  <label>Amount (points)</label>
-                  <input type="number" id="cashout-amount" class="form-control" value="1000" min="100">
+                  <label>Username</label>
+                  <input type="text" id="username" class="form-control" placeholder="Enter your username" required style="padding: 15px; border-radius: 10px;">
                 </div>
                 <div class="form-group">
-                  <label>PayPal Email</label>
-                  <input type="email" id="paypal-email" class="form-control" placeholder="your@email.com">
+                  <label>Password</label>
+                  <input type="password" id="password" class="form-control" placeholder="Enter your password" required style="padding: 15px; border-radius: 10px;">
                 </div>
-                <button id="submit-cashout" class="btn btn-warning btn-block">Request Cashout</button>
-                <div id="cashout-message" style="margin-top:10px;"></div>
-              </div>
+                <button type="submit" class="btn btn-primary btn-block" style="padding: 15px; border-radius: 10px; background: linear-gradient(135deg, #6c63ff 0%, #3a36b0 100%); border: none; font-weight: 600;">
+                  Sign In
+                </button>
+              </form>
+              <div id="login-message" class="text-center" style="margin-top: 20px; color: #dc3545;"></div>
             </div>
-          </div>
-          
-          <div class="col-md-6">
-            <!-- Offers -->
-            <div class="panel panel-default">
-              <div class="panel-heading">
-                Bonus Offers
-                <button id="add-offer-btn" class="btn btn-xs btn-primary pull-right">Add Offer</button>
-              </div>
-              <div class="panel-body">
-                <div id="active-offers">
-                  <div class="text-muted">Loading offers...</div>
-                </div>
-                
-                <!-- Add Offer Form -->
-                <div id="add-offer-form" class="hidden" style="margin-top:20px;">
-                  <h5>Add New Offer</h5>
-                  <input type="text" id="new-offer-name" class="form-control" placeholder="Offer Name" style="margin-bottom:5px;">
-                  <input type="number" id="new-offer-points" class="form-control" placeholder="Points" style="margin-bottom:5px;">
-                  <button id="save-offer" class="btn btn-primary btn-block">Save Offer</button>
-                </div>
-              </div>
-            </div>
-            
-            <!-- History -->
-            <div class="panel panel-default">
-              <div class="panel-heading">Recent Receipts</div>
-              <div class="panel-body" style="max-height:300px;overflow-y:auto;">
-                <div id="receipt-history">
-                  <div class="text-muted">No receipts yet</div>
-                </div>
-              </div>
-            </div>
-            
-            <!-- Logout -->
-            <button id="logout-btn" class="btn btn-default btn-block">Logout</button>
           </div>
         </div>
       </div>
     </div>
+    
+    <!-- Dashboard -->
+    <div id="dashboard" class="hidden">
+      <div class="row">
+        <!-- Left Column - Balance & Offers -->
+        <div class="col-md-4">
+          <!-- User Balance -->
+          <div class="balance-card">
+            <div class="balance-label">Available Points</div>
+            <div class="balance-amount" id="balance-value">0</div>
+            <div class="balance-label" id="user-name"></div>
+          </div>
+          
+          <!-- Total Earnings -->
+          <div class="balance-card">
+            <div class="balance-label">Total Earnings</div>
+            <div class="balance-amount" id="total-earnings">0</div>
+            <div class="balance-label">Lifetime Points</div>
+          </div>
+          
+          <!-- Active Offers -->
+          <div class="balance-card">
+            <h5>Active Offers</h5>
+            <div id="active-offers" style="max-height: 300px; overflow-y: auto;">
+              <div class="text-muted text-center">Loading offers...</div>
+            </div>
+            <button id="add-offer-btn" class="btn btn-link btn-block" style="margin-top: 10px;">+ Add New Offer</button>
+          </div>
+        </div>
+        
+        <!-- Center Column - Receipt Scanner -->
+        <div class="col-md-8">
+          <!-- Receipt Frame -->
+          <div class="receipt-frame">
+            <!-- Corners -->
+            <div class="receipt-corner corner-tl"></div>
+            <div class="receipt-corner corner-tr"></div>
+            <div class="receipt-corner corner-bl"></div>
+            <div class="receipt-corner corner-br"></div>
+            
+            <!-- Header -->
+            <div class="receipt-header">
+              <h2 class="receipt-title">Scan Receipt</h2>
+              <p class="receipt-subtitle">Upload a clear photo of your receipt</p>
+            </div>
+            
+            <!-- Body -->
+            <div class="receipt-body">
+              <!-- Store Logo Display -->
+              <div id="store-logo-display" class="store-logo-display hidden">
+                <div class="store-logo-icon" id="store-logo-icon">🏪</div>
+                <div class="store-logo-name" id="store-logo-name">Store Detected</div>
+              </div>
+              
+              <!-- Upload Area - FIXED! -->
+              <div class="receipt-image-container">
+                <!-- FIXED: File input wrapper that covers entire area -->
+                <div class="file-input-wrapper">
+                  <input type="file" id="receipt-image" accept="image/*,image/heic,image/heif" capture="environment">
+                </div>
+                
+                <!-- Upload visual content -->
+                <div id="upload-area" class="upload-area">
+                  <div class="upload-icon">📸</div>
+                  <div class="upload-text">
+                    <strong>Tap to snap a photo</strong><br>
+                    or upload from your device
+                  </div>
+                </div>
+                
+                <!-- Receipt Preview -->
+                <img id="receipt-preview" class="receipt-preview hidden">
+                
+                <!-- Processing Overlay -->
+                <div id="processing-overlay" class="processing-overlay hidden">
+                  <div class="spinner"></div>
+                  <h4 style="color: #6c63ff;">Analyzing Receipt</h4>
+                  <p style="color: #6c757d;">Detecting store, date, and total...</p>
+                </div>
+              </div>
+              
+              <!-- Extracted Data -->
+              <div id="extracted-data" class="extracted-data hidden">
+                <div class="data-row">
+                  <div class="data-icon">🏪</div>
+                  <div class="data-content">
+                    <div class="data-label">Store Detected</div>
+                    <div class="data-value" id="extracted-store">Unknown Store</div>
+                  </div>
+                </div>
+                
+                <div class="data-row">
+                  <div class="data-icon">📅</div>
+                  <div class="data-content">
+                    <div class="data-label">Purchase Date</div>
+                    <div class="data-value" id="extracted-date">Not detected</div>
+                  </div>
+                </div>
+                
+                <div class="data-row">
+                  <div class="data-icon">💰</div>
+                  <div class="data-content">
+                    <div class="data-label">Total Amount</div>
+                    <div class="data-value" id="extracted-total">$0.00</div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Duplicate Warning -->
+              <div id="duplicate-warning" class="duplicate-warning hidden">
+                <div class="warning-icon">⚠️</div>
+                <h4>Duplicate Receipt Detected</h4>
+                <p>This receipt has already been submitted. Please upload a different receipt.</p>
+              </div>
+            </div>
+            
+            <!-- Footer -->
+            <div class="receipt-footer">
+              <!-- Points Calculation -->
+              <div class="points-display">
+                <div class="points-label">Points Earned</div>
+                <div class="points-value" id="calculated-points">0</div>
+              </div>
+              
+              <!-- Offer Selection -->
+              <div class="form-group">
+                <select id="offer-type" class="form-control" style="padding: 12px; border-radius: 10px; border: 2px solid #e9ecef;">
+                  <option value="">Select bonus offer (optional)</option>
+                </select>
+              </div>
+              
+              <!-- Submit Button -->
+              <button id="submit-receipt" class="btn btn-primary btn-block" disabled style="padding: 15px; border-radius: 10px; background: linear-gradient(135deg, #6c63ff 0%, #3a36b0 100%); border: none; font-weight: 600;">
+                Submit Receipt & Earn Points
+              </button>
+            </div>
+          </div>
+          
+          <!-- Result Message -->
+          <div id="result-message" class="text-center" style="margin: 20px 0;"></div>
+        </div>
+      </div>
+      
+      <!-- Bottom Row - Recent Receipts & Cashout -->
+      <div class="row" style="margin-top: 30px;">
+        <!-- Recent Receipts -->
+        <div class="col-md-8">
+          <div class="balance-card">
+            <div class="clearfix">
+              <h5 style="float: left;">Recent Receipts</h5>
+              <button id="refresh-history" class="btn btn-xs btn-primary pull-right">Refresh</button>
+            </div>
+            <div id="receipt-history" style="max-height: 300px; overflow-y: auto;">
+              <div class="text-muted text-center">No receipts yet</div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Cashout -->
+        <div class="col-md-4">
+          <div class="balance-card">
+            <h5>Cash Out Rewards</h5>
+            <p style="color: #6c757d;">100 points = $1.00 USD</p>
+            <div class="form-group">
+              <label>Points to Cash Out</label>
+              <input type="number" id="cashout-amount" class="form-control" value="1000" min="100" step="100" style="padding: 12px; border-radius: 10px;">
+            </div>
+            <div class="form-group">
+              <label>PayPal Email</label>
+              <input type="email" id="paypal-email" class="form-control" placeholder="your@email.com" style="padding: 12px; border-radius: 10px;">
+            </div>
+            <button id="submit-cashout" class="btn btn-warning btn-block" style="padding: 12px; border-radius: 10px; background: linear-gradient(135deg, #ff6b6b 0%, #ff8e8e 100%); border: none; font-weight: 600;">
+              Request Cashout
+            </button>
+            <div id="cashout-message" class="text-center" style="margin-top: 10px;"></div>
+          </div>
+          
+          <!-- Logout -->
+          <button id="logout-btn" class="btn btn-default btn-block" style="margin-top: 15px; padding: 12px; border-radius: 10px;">Logout</button>
+        </div>
+      </div>
+    </div>
   </div>
-</div>
 
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
-<script>
-// ==============================================
-// CONFIG
-// ==============================================
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyED75I7fLhO119evsRGXwDhQftAYe5_dQwY8T9bhZtEh09OfhCe7rGSgYFOfIh7JVyRw/exec";
-let currentUser = null;
-
-// ==============================================
-// API CALL FUNCTION
-// ==============================================
-async function callAPI(action, data = {}) {
-  try {
-    console.log('API Call:', action, data);
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+  <script>
+  // ==============================================
+  // CONFIGURATION
+  // ==============================================
+  const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyED75I7fLhO119evsRGXwDhQftAYe5_dQwY8T9bhZtEh09OfhCe7rGSgYFOfIh7JVyRw/exec";
+  let currentUser = null;
+  let processedReceipts = new Set();
+  
+  // ==============================================
+  // UTILITY FUNCTIONS
+  // ==============================================
+  function showMessage(selector, message, type = 'info') {
+    const element = $(selector);
+    element.removeClass('alert-success alert-danger alert-info').addClass('alert-' + type);
+    element.html(message).show();
     
-    const params = new URLSearchParams();
-    params.append('action', action);
-    
-    for (const key in data) {
-      if (data[key] !== null && data[key] !== undefined) {
-        params.append(key, data[key].toString());
-      }
+    if (type === 'error') {
+      setTimeout(() => element.fadeOut(), 5000);
     }
-    
-    const response = await fetch(APPS_SCRIPT_URL, {
-      method: 'POST',
-      body: params,
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
-      }
-    });
-    
-    const responseText = await response.text();
-    console.log('Response:', responseText);
-    
+  }
+  
+  function formatCurrency(amount) {
+    return '$' + parseFloat(amount).toFixed(2);
+  }
+  
+  function generateReceiptHash(storeName, date, total) {
+    const data = `${storeName.toLowerCase()}_${date}_${total}`;
+    let hash = 0;
+    for (let i = 0; i < data.length; i++) {
+      hash = ((hash << 5) - hash) + data.charCodeAt(i);
+      hash = hash & hash;
+    }
+    return Math.abs(hash).toString(16);
+  }
+  
+  // ==============================================
+  // API FUNCTIONS
+  // ==============================================
+  async function callAPI(action, data = {}) {
     try {
-      return JSON.parse(responseText);
-    } catch (e) {
-      console.error('Failed to parse JSON:', responseText);
-      return {status: 'error', message: 'Invalid server response'};
-    }
-    
-  } catch (error) {
-    console.error('API Error:', error);
-    return {status: 'error', message: 'Network error'};
-  }
-}
-
-// ==============================================
-// LOGIN SYSTEM
-// ==============================================
-$('#login-form').on('submit', async function(e) {
-  e.preventDefault();
-  
-  const username = $('#username').val().trim();
-  const password = $('#password').val().trim();
-  
-  if (!username || !password) {
-    showError('login-error', 'Enter username and password');
-    return;
-  }
-  
-  showError('login-error', 'Logging in...');
-  
-  const result = await callAPI('login', {username, password});
-  
-  if (result.status === 'success') {
-    currentUser = result.user;
-    
-    // Update UI
-    $('#welcome-user').text(currentUser.name || currentUser.username);
-    $('#balance-value').text(currentUser.balance || 0);
-    $('#login-panel').addClass('hidden');
-    $('#dashboard').removeClass('hidden');
-    showError('login-error', '');
-    
-    // Load data
-    loadOffers();
-    loadReceiptHistory();
-    
-    // Initialize system
-    await callAPI('initialize');
-    
-  } else {
-    showError('login-error', result.message || 'Login failed');
-  }
-});
-
-// ==============================================
-// FILE UPLOAD - FIXED!
-// ==============================================
-// Make upload area clickable
-$('#upload-area').on('click', function() {
-  $('#receipt-image').trigger('click');
-});
-
-// Handle file selection
-$('#receipt-image').on('change', async function(e) {
-  const file = e.target.files[0];
-  if (!file) return;
-  
-  console.log('File selected:', file.name, file.size);
-  
-  // Validate file
-  if (file.size > 5 * 1024 * 1024) {
-    showMessage('result-message', 'File too large (max 5MB)', 'error');
-    return;
-  }
-  
-  // Show preview
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    $('#receipt-preview')
-      .attr('src', e.target.result)
-      .removeClass('hidden');
-    $('#upload-area').addClass('hidden');
-  };
-  reader.readAsDataURL(file);
-  
-  // Process OCR
-  $('#processing').removeClass('hidden');
-  $('#submit-receipt').prop('disabled', true);
-  
-  try {
-    // Convert HEIC if needed
-    let processedFile = file;
-    if (file.name.toLowerCase().endsWith('.heic') || file.type.includes('heic')) {
-      processedFile = await convertHeicToJpg(file);
-    }
-    
-    // Perform OCR
-    const ocrResult = await performOCR(processedFile);
-    
-    // Display store name
-    $('#detected-store').text(ocrResult.storeName);
-    $('#store-name-display').removeClass('hidden');
-    
-    // Store OCR data
-    $('#submit-receipt').data('ocr', ocrResult);
-    
-    // Check if receipt is valid
-    if (!isWithin7Days(ocrResult.date)) {
-      showMessage('result-message', 'Receipt is older than 7 days', 'error');
-    } else {
-      $('#submit-receipt').prop('disabled', false);
-    }
-    
-  } catch (error) {
-    console.error('OCR Error:', error);
-    showMessage('result-message', 'Error processing image: ' + error.message, 'error');
-  } finally {
-    $('#processing').addClass('hidden');
-  }
-});
-
-// OCR Function
-async function performOCR(file) {
-  const worker = await Tesseract.createWorker('eng', 1);
-  const { data } = await worker.recognize(file);
-  await worker.terminate();
-  
-  const text = data.text || '';
-  console.log('OCR Text:', text.substring(0, 200));
-  
-  // Extract store name
-  const lines = text.split('\n').filter(line => line.trim());
-  let storeName = lines[0] || 'Unknown Store';
-  
-  // Look for common stores
-  const storePatterns = ['WALMART', 'TARGET', 'COSTCO', 'AMAZON', 'STARBUCKS', 'CVS', 'WALGREENS'];
-  for (const line of lines) {
-    for (const pattern of storePatterns) {
-      if (line.toUpperCase().includes(pattern)) {
-        storeName = line.trim();
-        break;
+      const params = new URLSearchParams();
+      params.append('action', action);
+      
+      for (const key in data) {
+        if (data[key] !== undefined && data[key] !== null) {
+          params.append(key, data[key].toString());
+        }
       }
+      
+      const response = await fetch(APPS_SCRIPT_URL, {
+        method: 'POST',
+        body: params.toString(),
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        }
+      });
+      
+      return await response.json();
+    } catch (error) {
+      console.error('API Error:', error);
+      return {status: 'error', message: 'Network error'};
     }
-    if (storeName !== 'Unknown Store') break;
   }
   
-  // Extract date
-  let date = null;
-  const dateMatch = text.match(/\b(\d{1,2})[-\/](\d{1,2})[-\/](\d{2,4})\b/);
-  if (dateMatch) {
-    const month = dateMatch[1].padStart(2, '0');
-    const day = dateMatch[2].padStart(2, '0');
-    const year = dateMatch[3].length === 2 ? '20' + dateMatch[3] : dateMatch[3];
-    date = `${year}-${month}-${day}`;
-  }
+  // ==============================================
+  // LOGIN SYSTEM
+  // ==============================================
+  $('#login-form').on('submit', async function(e) {
+    e.preventDefault();
+    
+    const username = $('#username').val().trim();
+    const password = $('#password').val().trim();
+    
+    if (!username || !password) {
+      showMessage('#login-message', 'Please enter username and password', 'error');
+      return;
+    }
+    
+    showMessage('#login-message', '🔐 Logging in...', 'info');
+    
+    const result = await callAPI('login', {username, password});
+    
+    if (result.status === 'success') {
+      currentUser = result.user;
+      
+      // Update UI
+      $('#user-name').text(currentUser.name || currentUser.username);
+      $('#balance-value').text(currentUser.balance || 0);
+      $('#total-earnings').text(currentUser.totalPoints || 0);
+      $('#login-panel').addClass('hidden');
+      $('#dashboard').removeClass('hidden');
+      $('#login-message').hide();
+      
+      // Load data
+      loadOffers();
+      loadReceiptHistory();
+      
+      // Load processed receipts for duplicate prevention
+      const userReceipts = JSON.parse(localStorage.getItem(`receipts_${username}`) || '[]');
+      userReceipts.forEach(receipt => {
+        const hash = generateReceiptHash(receipt.store, receipt.date, receipt.total);
+        processedReceipts.add(hash);
+      });
+      
+    } else {
+      showMessage('#login-message', result.message || 'Login failed', 'error');
+    }
+  });
   
-  // Extract total
-  let total = 0;
-  const totalMatch = text.match(/total\s*[\$]?\s*([\d,]+\.\d{2})/i) ||
-                    text.match(/amount\s*[\$]?\s*([\d,]+\.\d{2})/i) ||
-                    text.match(/[\$](\d+\.\d{2})\b/);
-  
-  if (totalMatch) {
-    total = parseFloat(totalMatch[1].replace(/,/g, ''));
-  }
-  
-  return {storeName, date, total, fullText: text};
-}
-
-// HEIC Converter
-async function convertHeicToJpg(file) {
-  return new Promise((resolve) => {
+  // ==============================================
+  // FIXED FILE UPLOAD - NOW CLICKABLE!
+  // ==============================================
+  // Handle file selection
+  $('#receipt-image').on('change', async function(e) {
+    const file = e.target.files[0];
+    if (!file) {
+      console.log('No file selected');
+      return;
+    }
+    
+    console.log('File selected:', file.name, file.type, file.size);
+    
+    // Validate file
+    if (file.size > 10 * 1024 * 1024) {
+      showMessage('#result-message', 'File too large (max 10MB)', 'error');
+      return;
+    }
+    
+    // Show preview
     const reader = new FileReader();
     reader.onload = function(e) {
-      const img = new Image();
-      img.onload = function() {
-        const canvas = document.createElement('canvas');
-        canvas.width = img.width;
-        canvas.height = img.height;
-        const ctx = canvas.getContext('2d');
-        ctx.fillStyle = '#FFFFFF';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(img, 0, 0);
-        
-        canvas.toBlob(blob => {
-          resolve(new File([blob], file.name.replace(/\.heic$/i, '.jpg'), {type: 'image/jpeg'}));
-        }, 'image/jpeg', 0.9);
-      };
-      img.src = e.target.result;
+      $('#receipt-preview')
+        .attr('src', e.target.result)
+        .removeClass('hidden');
+      $('#upload-area').addClass('hidden');
     };
     reader.readAsDataURL(file);
-  });
-}
-
-// Date validation
-function isWithin7Days(dateString) {
-  if (!dateString) return false;
-  const receiptDate = new Date(dateString);
-  if (isNaN(receiptDate.getTime())) return false;
-  
-  const today = new Date();
-  const diffTime = today - receiptDate;
-  const diffDays = diffTime / (1000 * 60 * 60 * 24);
-  return diffDays <= 14 && diffDays >= 0;
-}
-
-// Points calculation
-function calculatePoints(total) {
-  if (total <= 0) return 0;
-  if (total < 50) return 5;
-  if (total < 100) return 25;
-  return 50;
-}
-
-// ==============================================
-// SUBMIT RECEIPT
-// ==============================================
-$('#submit-receipt').on('click', async function() {
-  const ocrData = $(this).data('ocr');
-  if (!ocrData) {
-    showMessage('result-message', 'Please upload a receipt first', 'error');
-    return;
-  }
-  
-  // Validate date
-  if (!isWithin7Days(ocrData.date)) {
-    showMessage('result-message', 'Receipt is older than 7 days', 'error');
-    return;
-  }
-  
-  // Calculate points
-  const basePoints = calculatePoints(ocrData.total);
-  let bonusPoints = 0;
-  let offerType = '';
-  
-  const selectedOffer = $('#offer-type').val();
-  const offerPoints = parseInt($('#offer-type option:selected').data('points') || 0);
-  
-  // Check if offer applies
-  if (selectedOffer && ocrData.fullText.toLowerCase().includes(selectedOffer.toLowerCase())) {
-    bonusPoints = offerPoints;
-    offerType = selectedOffer;
-  }
-  
-  // Submit to server
-  showMessage('result-message', 'Processing receipt...', 'info');
-  $('#submit-receipt').prop('disabled', true);
-  
-  const result = await callAPI('updateReceipt', {
-    username: currentUser.username,
-    storeName: ocrData.storeName,
-    date: ocrData.date || '',
-    total: ocrData.total,
-    basePoints: basePoints,
-    bonusPoints: bonusPoints,
-    offerType: offerType
-  });
-  
-  if (result.status === 'success') {
-    showMessage('result-message', `
-      ✓ Receipt processed!<br>
-      Points earned: ${result.pointsEarned}<br>
-      New balance: ${result.newBalance}
-    `, 'success');
     
-    // Update UI
-    $('#balance-value').text(result.newBalance);
+    // Show processing
+    $('#processing-overlay').removeClass('hidden');
+    $('#extracted-data').addClass('hidden');
+    $('#duplicate-warning').addClass('hidden');
+    $('#store-logo-display').addClass('hidden');
+    $('#submit-receipt').prop('disabled', true);
     
-    // Reset form
-    setTimeout(() => {
-      resetUploadForm();
-      loadReceiptHistory();
-    }, 3000);
-    
-  } else if (result.status === 'duplicate') {
-    showMessage('result-message', 'This receipt was already processed', 'error');
-  } else {
-    showMessage('result-message', result.message || 'Error processing receipt', 'error');
-  }
-  
-  $('#submit-receipt').prop('disabled', false);
-});
-
-function resetUploadForm() {
-  $('#receipt-preview').addClass('hidden').attr('src', '');
-  $('#upload-area').removeClass('hidden');
-  $('#store-name-display').addClass('hidden');
-  $('#receipt-image').val('');
-  $('#submit-receipt').prop('disabled', true).removeData('ocr');
-  $('#result-message').empty();
-}
-
-// ==============================================
-// LOAD OFFERS
-// ==============================================
-async function loadOffers() {
-  const result = await callAPI('getOffers');
-  
-  if (result.status === 'success') {
-    const offers = result.offers || [];
-    const offerSelect = $('#offer-type');
-    const offersDiv = $('#active-offers');
-    
-    // Update dropdown
-    offerSelect.empty().append('<option value="">No offer</option>');
-    
-    // Update offers list
-    if (offers.length === 0) {
-      offersDiv.html('<div class="text-muted">No offers available</div>');
-    } else {
-      let offersHtml = '';
-      offers.forEach(offer => {
-        // Add to dropdown
-        offerSelect.append(`<option value="${offer.name}" data-points="${offer.points}">${offer.name} (+${offer.points} pts)</option>`);
+    try {
+      // Convert HEIC if needed
+      let processedFile = file;
+      if (file.name.toLowerCase().endsWith('.heic') || file.type.includes('heic')) {
+        console.log('Converting HEIC to JPG');
+        processedFile = await convertHeicToJpg(file);
+      }
+      
+      // Perform OCR with store logo detection
+      console.log('Starting OCR processing');
+      const ocrResult = await performAdvancedOCR(processedFile);
+      console.log('OCR Result:', ocrResult);
+      
+      // Display extracted data
+      displayExtractedData(ocrResult);
+      
+      // Check for duplicate
+      const isDuplicate = await checkDuplicateReceipt(ocrResult);
+      
+      if (isDuplicate) {
+        $('#duplicate-warning').removeClass('hidden');
+        showMessage('#result-message', 'This receipt has already been submitted', 'error');
+      } else {
+        // Calculate points
+        const points = calculatePoints(ocrResult.total);
+        $('#calculated-points').text(points);
         
-        // Add to list
-        offersHtml += `
-          <div class="history-item">
-            <strong>${offer.name}</strong>
-            <span class="pull-right" style="color:#0f0;">+${offer.points} pts</span><br>
-            <small>${offer.description || ''}</small>
-          </div>
-        `;
-      });
-      offersDiv.html(offersHtml);
+        // Enable submit
+        $('#submit-receipt').prop('disabled', false);
+        
+        // Store data for submission
+        $('#submit-receipt').data('receipt-data', ocrResult);
+      }
+      
+    } catch (error) {
+      console.error('OCR Error:', error);
+      showMessage('#result-message', 'Error processing receipt: ' + error.message, 'error');
+    } finally {
+      $('#processing-overlay').addClass('hidden');
+    }
+  });
+  
+  // Advanced OCR with Store Logo Detection
+  async function performAdvancedOCR(file) {
+    console.log('Starting OCR...');
+    const worker = await Tesseract.createWorker('eng', 1);
+    
+    try {
+      const { data } = await worker.recognize(file);
+      await worker.terminate();
+      
+      const text = data.text || '';
+      console.log('OCR Text extracted:', text.substring(0, 200) + '...');
+      const lines = text.split('\n').filter(line => line.trim());
+      
+      // Detect store with logo patterns
+      const storeDetection = detectStoreWithLogo(lines, text);
+      
+      // Extract date (Instacart/Fetch-style)
+      const date = extractDate(text);
+      
+      // Extract total with multiple patterns
+      const total = extractTotal(text);
+      
+      // Detect store logo icon
+      const storeIcon = getStoreIcon(storeDetection.name);
+      
+      return {
+        storeName: storeDetection.name,
+        storeConfidence: storeDetection.confidence,
+        storeIcon: storeIcon,
+        date: date,
+        total: total,
+        fullText: text.substring(0, 500)
+      };
+      
+    } catch (error) {
+      await worker.terminate();
+      throw error;
     }
   }
-}
-
-// ==============================================
-// CASHOUT SYSTEM
-// ==============================================
-$('#submit-cashout').on('click', async function() {
-  const amount = parseInt($('#cashout-amount').val());
-  const email = $('#paypal-email').val().trim();
   
-  if (!amount || amount < 100) {
-    showMessage('cashout-message', 'Minimum cashout is 100 points', 'error');
-    return;
-  }
-  
-  if (!email || !isValidEmail(email)) {
-    showMessage('cashout-message', 'Valid PayPal email required', 'error');
-    return;
-  }
-  
-  const currentBalance = parseInt($('#balance-value').text()) || 0;
-  if (amount > currentBalance) {
-    showMessage('cashout-message', 'Insufficient points', 'error');
-    return;
-  }
-  
-  $('#submit-cashout').prop('disabled', true);
-  showMessage('cashout-message', 'Processing cashout...', 'info');
-  
-  const result = await callAPI('cashout', {
-    username: currentUser.username,
-    amount: amount,
-    method: 'PayPal',
-    paypalEmail: email
-  });
-  
-  if (result.status === 'success') {
-    showMessage('cashout-message', `
-      ✓ Cashout requested!<br>
-      ID: ${result.cashoutId}<br>
-      New balance: ${result.newBalance}
-    `, 'success');
+  // Store detection with logo patterns
+  function detectStoreWithLogo(lines, fullText) {
+    const text = fullText.toLowerCase();
+    let bestMatch = { name: 'Unknown Store', confidence: 0 };
     
-    // Update balance
-    $('#balance-value').text(result.newBalance);
+    // Check for store patterns
+    const storePatterns = {
+      'Walmart': ['walmart', 'wm', 'walmart supercenter', 'walmart store'],
+      'Target': ['target', 'tg', 'target store'],
+      'Amazon': ['amazon', 'amzn', 'amazon.com'],
+      'Starbucks': ['starbucks', 'stbx', 'starbucks coffee'],
+      'Costco': ['costco', 'costco wholesale'],
+      'CVS': ['cvs', 'cvs pharmacy'],
+      'Walgreens': ['walgreens', 'wg', 'walgreens pharmacy'],
+      'Kroger': ['kroger', 'krg', 'kroger store'],
+      'Home Depot': ['home depot', 'hd', 'the home depot'],
+      'Best Buy': ['best buy', 'bb', 'bestbuy']
+    };
     
-  } else {
-    showMessage('cashout-message', result.message || 'Cashout failed', 'error');
-  }
-  
-  $('#submit-cashout').prop('disabled', false);
-});
-
-function isValidEmail(email) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-}
-
-// ==============================================
-// OFFER MANAGEMENT
-// ==============================================
-$('#add-offer-btn').on('click', function() {
-  $('#add-offer-form').toggleClass('hidden');
-});
-
-$('#save-offer').on('click', async function() {
-  const name = $('#new-offer-name').val().trim();
-  const points = $('#new-offer-points').val().trim();
-  
-  if (!name || !points) {
-    alert('Please enter offer name and points');
-    return;
-  }
-  
-  const result = await callAPI('addOffer', {
-    name: name,
-    points: points,
-    description: `Bonus offer for ${name}`,
-    storeMatch: name.toLowerCase()
-  });
-  
-  if (result.status === 'success') {
-    alert('Offer added!');
-    $('#new-offer-name').val('');
-    $('#new-offer-points').val('');
-    $('#add-offer-form').addClass('hidden');
-    loadOffers();
-  } else {
-    alert('Error: ' + result.message);
-  }
-});
-
-// ==============================================
-// LOAD RECEIPT HISTORY
-// ==============================================
-async function loadReceiptHistory() {
-  if (!currentUser) return;
-  
-  const result = await callAPI('getReceiptHistory', {username: currentUser.username});
-  
-  if (result.status === 'success') {
-    const historyDiv = $('#receipt-history');
-    const receipts = result.receipts || [];
+    for (const [storeName, patterns] of Object.entries(storePatterns)) {
+      for (const pattern of patterns) {
+        if (text.includes(pattern.toLowerCase())) {
+          return { name: storeName, confidence: 100 };
+        }
+      }
+    }
     
-    if (receipts.length === 0) {
-      historyDiv.html('<div class="text-muted">No receipts yet</div>');
+    // Try first line as store name
+    if (lines.length > 0) {
+      const firstLine = lines[0].trim();
+      if (firstLine.length > 2 && firstLine.length < 50) {
+        bestMatch = { name: firstLine, confidence: 70 };
+      }
+    }
+    
+    return bestMatch;
+  }
+  
+  // Extract date with multiple formats
+  function extractDate(text) {
+    const patterns = [
+      /\b(\d{1,2})[-\/](\d{1,2})[-\/](\d{2,4})\b/,  // MM/DD/YY or MM/DD/YYYY
+      /\b(\d{2,4})[-\/](\d{1,2})[-\/](\d{1,2})\b/,  // YYYY/MM/DD
+      /\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\s+(\d{1,2}),?\s+(\d{4})\b/i,  // Month Day, Year
+    ];
+    
+    for (const pattern of patterns) {
+      const match = text.match(pattern);
+      if (match) {
+        if (pattern === patterns[2]) {
+          // Month name format
+          const monthNames = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+          const month = monthNames.indexOf(match[1].toLowerCase().substring(0, 3)) + 1;
+          const day = match[2];
+          const year = match[3];
+          return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        } else {
+          // Numeric format
+          let month, day, year;
+          if (match[3].length === 4) {
+            // YYYY/MM/DD
+            year = match[1];
+            month = match[2];
+            day = match[3];
+          } else {
+            // MM/DD/YY or MM/DD/YYYY
+            month = match[1];
+            day = match[2];
+            year = match[3].length === 2 ? '20' + match[3] : match[3];
+          }
+          return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        }
+      }
+    }
+    
+    return null;
+  }
+  
+  // Extract total with multiple patterns
+  function extractTotal(text) {
+    const patterns = [
+      /total\s*[\$]?\s*([\d,]+\.\d{2})/i,
+      /amount\s*[\$]?\s*([\d,]+\.\d{2})/i,
+      /balance\s*[\$]?\s*([\d,]+\.\d{2})/i,
+      /[\$](\d+\.\d{2})\b/,
+      /(\d+\.\d{2})\s*[\$]/,
+    ];
+    
+    for (const pattern of patterns) {
+      const match = text.match(pattern);
+      if (match) {
+        const amount = match[1] || match[0].replace(/[^\d.]/g, '');
+        return parseFloat(amount.replace(/,/g, ''));
+      }
+    }
+    
+    return 0;
+  }
+  
+  // Get store icon
+  function getStoreIcon(storeName) {
+    const storeIcons = {
+      'Walmart': '🛒',
+      'Target': '🎯',
+      'Amazon': '📦',
+      'Starbucks': '☕',
+      'Costco': '🏪',
+      'CVS': '💊',
+      'Walgreens': '🏪',
+      'Kroger': '🛒',
+      'Home Depot': '🏠',
+      'Best Buy': '📺'
+    };
+    
+    for (const [store, icon] of Object.entries(storeIcons)) {
+      if (storeName.toLowerCase().includes(store.toLowerCase())) {
+        return icon;
+      }
+    }
+    
+    return '🏪';
+  }
+  
+  // Display extracted data
+  function displayExtractedData(data) {
+    $('#extracted-store').text(data.storeName);
+    $('#extracted-date').text(data.date || 'Not detected');
+    $('#extracted-total').text(formatCurrency(data.total));
+    
+    // Show store logo
+    if (data.storeName !== 'Unknown Store') {
+      $('#store-logo-icon').text(data.storeIcon);
+      $('#store-logo-name').text(data.storeName);
+      $('#store-logo-display').removeClass('hidden');
+    }
+    
+    $('#extracted-data').removeClass('hidden');
+  }
+  
+  // Check for duplicate receipt
+  async function checkDuplicateReceipt(data) {
+    if (!currentUser || !data.date || !data.total || data.total === 0) {
+      return false;
+    }
+    
+    const hash = generateReceiptHash(data.storeName, data.date, data.total);
+    
+    // Check local cache
+    if (processedReceipts.has(hash)) {
+      return true;
+    }
+    
+    // Check server
+    const result = await callAPI('checkDuplicate', {
+      username: currentUser.username,
+      receiptHash: hash
+    });
+    
+    if (result.status === 'duplicate') {
+      processedReceipts.add(hash);
+      return true;
+    }
+    
+    return false;
+  }
+  
+  // HEIC converter
+  async function convertHeicToJpg(file) {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+          const canvas = document.createElement('canvas');
+          canvas.width = img.width;
+          canvas.height = img.height;
+          const ctx = canvas.getContext('2d');
+          ctx.fillStyle = '#FFFFFF';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(img, 0, 0);
+          
+          canvas.toBlob(blob => {
+            resolve(new File([blob], file.name.replace(/\.heic$/i, '.jpg'), {type: 'image/jpeg'}));
+          }, 'image/jpeg', 0.9);
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+  
+  // Points calculation
+  function calculatePoints(total) {
+    if (total <= 0) return 0;
+    if (total < 50) return 5;
+    if (total < 100) return 25;
+    if (total < 200) return 50;
+    return 100;
+  }
+  
+  // Date validation
+  function isWithin7Days(dateString) {
+    if (!dateString) return false;
+    const receiptDate = new Date(dateString);
+    if (isNaN(receiptDate.getTime())) return false;
+    
+    const today = new Date();
+    const diffTime = Math.abs(today - receiptDate);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays <= 14;
+  }
+  
+  // ==============================================
+  // SUBMIT RECEIPT
+  // ==============================================
+  $('#submit-receipt').on('click', async function() {
+    const receiptData = $(this).data('receipt-data');
+    if (!receiptData) {
+      showMessage('#result-message', 'Please upload a receipt first', 'error');
+      return;
+    }
+    
+    // Validate date
+    if (!isWithin7Days(receiptData.date)) {
+      showMessage('#result-message', 'Receipt must be from the last 7 days', 'error');
+      return;
+    }
+    
+    // Calculate points
+    const basePoints = calculatePoints(receiptData.total);
+    let bonusPoints = 0;
+    let offerType = '';
+    
+    const selectedOffer = $('#offer-type').val();
+    const offerPoints = parseInt($('#offer-type option:selected').data('points') || 0);
+    
+    if (selectedOffer && receiptData.fullText.toLowerCase().includes(selectedOffer.toLowerCase())) {
+      bonusPoints = offerPoints;
+      offerType = selectedOffer;
+    }
+    
+    // Generate receipt hash
+    const receiptHash = generateReceiptHash(receiptData.storeName, receiptData.date, receiptData.total);
+    
+    // Submit to server
+    showMessage('#result-message', '📤 Submitting receipt...', 'info');
+    $('#submit-receipt').prop('disabled', true);
+    
+    const result = await callAPI('updateReceipt', {
+      username: currentUser.username,
+      storeName: receiptData.storeName,
+      date: receiptData.date,
+      total: receiptData.total,
+      basePoints: basePoints,
+      bonusPoints: bonusPoints,
+      offerType: offerType,
+      receiptHash: receiptHash
+    });
+    
+    if (result.status === 'success') {
+      showMessage('#result-message', `
+        🎉 Receipt processed successfully!<br>
+        <strong>${result.pointsEarned} points</strong> added to your account<br>
+        New balance: <strong>${result.newBalance} points</strong>
+      `, 'success');
+      
+      // Update UI
+      $('#balance-value').text(result.newBalance);
+      currentUser.balance = result.newBalance;
+      
+      // Add to duplicate prevention
+      processedReceipts.add(receiptHash);
+      
+      // Store in localStorage
+      const userReceipts = JSON.parse(localStorage.getItem(`receipts_${currentUser.username}`) || '[]');
+      userReceipts.push({
+        store: receiptData.storeName,
+        date: receiptData.date,
+        total: receiptData.total,
+        timestamp: new Date().toISOString(),
+        points: result.pointsEarned
+      });
+      localStorage.setItem(`receipts_${currentUser.username}`, JSON.stringify(userReceipts));
+      
+      // Reset form
+      setTimeout(() => {
+        resetReceiptUpload();
+        loadReceiptHistory();
+      }, 3000);
+      
+    } else if (result.status === 'duplicate') {
+      showMessage('#result-message', '⚠️ This receipt has already been processed', 'error');
+      $('#duplicate-warning').removeClass('hidden');
+      processedReceipts.add(receiptHash);
     } else {
-      let html = '';
-      receipts.forEach(receipt => {
-        const totalPoints = (parseInt(receipt.PointsEarned) || 0);
-        html += `
-          <div class="history-item">
-            <strong>${receipt.StoreName || 'Unknown'}</strong>
-            <span class="pull-right" style="color:#0f0;">+${totalPoints}</span><br>
-            <small>$${(parseFloat(receipt.TotalAmount) || 0).toFixed(2)} • ${formatDate(receipt.Timestamp)}</small>
-          </div>
-        `;
-      });
-      historyDiv.html(html);
+      showMessage('#result-message', result.message || 'Error processing receipt', 'error');
     }
-  }
-}
-
-function formatDate(dateString) {
-  try {
-    const date = new Date(dateString);
-    return date.toLocaleDateString();
-  } catch (e) {
-    return 'Unknown';
-  }
-}
-
-// ==============================================
-// UTILITY FUNCTIONS
-// ==============================================
-function showMessage(elementId, message, type = 'info') {
-  const element = $('#' + elementId);
-  element.html(message);
-  element.removeClass().addClass('alert');
-  
-  if (type === 'success') {
-    element.addClass('alert-success');
-  } else if (type === 'error') {
-    element.addClass('alert-danger');
-  } else {
-    element.addClass('alert-info');
-  }
-}
-
-function showError(elementId, message) {
-  $('#' + elementId).text(message);
-}
-
-// ==============================================
-// LOGOUT
-// ==============================================
-$('#logout-btn').on('click', function() {
-  currentUser = null;
-  $('#dashboard').addClass('hidden');
-  $('#login-panel').removeClass('hidden');
-  $('#username').val('');
-  $('#password').val('');
-  resetUploadForm();
-});
-
-// ==============================================
-// INITIALIZE
-// ==============================================
-$(document).ready(function() {
-  console.log('RVT Receipts loaded');
-  
-  // Test connection
-  callAPI('test').then(result => {
-    console.log('Server test:', result);
+    
+    $('#submit-receipt').prop('disabled', false);
   });
   
-  // Add Bootstrap spinner CSS
-  if (!$('.spinner-border').length) {
-    $('head').append(`
-      <style>
-        .spinner-border {
-          display: inline-block;
-          width: 2rem;
-          height: 2rem;
-          vertical-align: text-bottom;
-          border: 0.25em solid currentColor;
-          border-right-color: transparent;
-          border-radius: 50%;
-          animation: spinner-border .75s linear infinite;
-        }
-        @keyframes spinner-border {
-          to { transform: rotate(360deg); }
-        }
-      </style>
-    `);
+  function resetReceiptUpload() {
+    $('#receipt-preview').addClass('hidden').attr('src', '');
+    $('#upload-area').removeClass('hidden');
+    $('#store-logo-display').addClass('hidden');
+    $('#extracted-data').addClass('hidden');
+    $('#duplicate-warning').addClass('hidden');
+    $('#receipt-image').val('');
+    $('#submit-receipt').prop('disabled', true).removeData('receipt-data');
+    $('#calculated-points').text('0');
+    $('#result-message').hide();
   }
-});
-</script>
+  
+  // ==============================================
+  // LOAD OFFERS
+  // ==============================================
+  async function loadOffers() {
+    const result = await callAPI('getOffers');
+    
+    if (result.status === 'success') {
+      const offers = result.offers || [];
+      const offerSelect = $('#offer-type');
+      const offersDiv = $('#active-offers');
+      
+      // Update dropdown
+      offerSelect.empty().append('<option value="">Select bonus offer (optional)</option>');
+      
+      // Update offers list
+      if (offers.length === 0) {
+        offersDiv.html('<div class="text-muted text-center">No offers available</div>');
+      } else {
+        let offersHtml = '';
+        offers.forEach(offer => {
+          // Add to dropdown
+          offerSelect.append(`<option value="${offer.name}" data-points="${offer.points}">${offer.name} (+${offer.points} pts)</option>`);
+          
+          // Add to list
+          offersHtml += `
+            <div style="border-bottom:1px solid #f1f3f5;padding:10px 0;">
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <strong>${offer.name}</strong>
+                <span style="color:#6c63ff;font-weight:600;">+${offer.points} pts</span>
+              </div>
+              <small style="color:#6c757d;">${offer.description || ''}</small>
+            </div>
+          `;
+        });
+        offersDiv.html(offersHtml);
+      }
+    }
+  }
+  
+  // ==============================================
+  // LOAD RECEIPT HISTORY
+  // ==============================================
+  async function loadReceiptHistory() {
+    if (!currentUser) return;
+    
+    const result = await callAPI('getReceiptHistory', {username: currentUser.username});
+    
+    if (result.status === 'success') {
+      const historyDiv = $('#receipt-history');
+      const receipts = result.receipts || [];
+      
+      if (receipts.length === 0) {
+        historyDiv.html('<div class="text-muted text-center">No receipts yet</div>');
+      } else {
+        let html = '';
+        receipts.forEach(receipt => {
+          const totalPoints = (parseInt(receipt.PointsEarned) || 0);
+          const date = new Date(receipt.Timestamp).toLocaleDateString();
+          html += `
+            <div style="border-bottom:1px solid #f1f3f5;padding:12px 0;">
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <div>
+                  <strong>${receipt.StoreName || 'Unknown Store'}</strong>
+                  <div style="color:#6c757d;font-size:12px;">${date}</div>
+                </div>
+                <div style="text-align:right;">
+                  <span style="color:#6c63ff;font-weight:600;">+${totalPoints}</span><br>
+                  <span style="color:#6c757d;font-size:12px;">$${(parseFloat(receipt.TotalAmount) || 0).toFixed(2)}</span>
+                </div>
+              </div>
+            </div>
+          `;
+        });
+        historyDiv.html(html);
+      }
+    }
+  }
+  
+  $('#refresh-history').on('click', loadReceiptHistory);
+  
+  // ==============================================
+  // CASHOUT SYSTEM
+  // ==============================================
+  $('#submit-cashout').on('click', async function() {
+    const amount = parseInt($('#cashout-amount').val());
+    const email = $('#paypal-email').val().trim();
+    
+    if (!amount || amount < 100) {
+      showMessage('#cashout-message', 'Minimum cashout is 100 points', 'error');
+      return;
+    }
+    
+    if (!email || !isValidEmail(email)) {
+      showMessage('#cashout-message', 'Valid PayPal email required', 'error');
+      return;
+    }
+    
+    const currentBalance = parseInt($('#balance-value').text()) || 0;
+    if (amount > currentBalance) {
+      showMessage('#cashout-message', 'Insufficient points', 'error');
+      return;
+    }
+    
+    $('#submit-cashout').prop('disabled', true);
+    showMessage('#cashout-message', 'Processing cashout request...', 'info');
+    
+    const result = await callAPI('cashout', {
+      username: currentUser.username,
+      amount: amount,
+      method: 'PayPal',
+      paypalEmail: email
+    });
+    
+    if (result.status === 'success') {
+      showMessage('#cashout-message', `
+        ✅ Cashout requested!<br>
+        <strong>${amount} points</strong> submitted for payout<br>
+        New balance: <strong>${result.newBalance} points</strong>
+      `, 'success');
+      
+      // Update balance
+      $('#balance-value').text(result.newBalance);
+      currentUser.balance = result.newBalance;
+      
+    } else {
+      showMessage('#cashout-message', result.message || 'Cashout failed', 'error');
+    }
+    
+    $('#submit-cashout').prop('disabled', false);
+  });
+  
+  function isValidEmail(email) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  }
+  
+  // ==============================================
+  // LOGOUT
+  // ==============================================
+  $('#logout-btn').on('click', function() {
+    currentUser = null;
+    processedReceipts.clear();
+    $('#dashboard').addClass('hidden');
+    $('#login-panel').removeClass('hidden');
+    $('#username').val('');
+    $('#password').val('');
+    resetReceiptUpload();
+    $('#result-message').hide();
+    $('#cashout-message').hide();
+  });
+  
+  // ==============================================
+  // INITIALIZATION
+  // ==============================================
+  $(document).ready(function() {
+    console.log('RVT Receipts Professional Scanner loaded');
+    
+    // Test connection
+    callAPI('test').then(result => {
+      console.log('Server connection:', result);
+    });
+    
+    // Initialize system
+    callAPI('initialize');
+    
+    // Add click handler for upload area as backup
+    $('.receipt-image-container').on('click', function(e) {
+      // Only trigger if clicking on the upload area, not on the preview
+      if ($(e.target).closest('#upload-area').length || $(e.target).is('#upload-area')) {
+        $('#receipt-image').trigger('click');
+      }
+    });
+  });
+  </script>
 </body>
 </html>
